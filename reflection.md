@@ -1,255 +1,48 @@
-# Day 14 — Reflection
+# Day 14 — Reflection & Failure Analysis
 
-## Evaluation Report & Failure Analysis
-
-Dùng kết quả thật trong `artifacts/benchmark_results.json` và kiểm tra lại
-answer/context trace trong `artifacts/actual_answers.json` trước khi kết luận.
-
----
-
-## 1. Benchmark Results Summary
-
-**Overall pass rate:** ____%
-
-| Metric | Average | Min | Max | Nhận xét |
-|---|---:|---:|---:|---|
-| Context Recall | | | | |
-| Context Precision | | | | |
-| Faithfulness | | | | |
-| Relevance | | | | |
-| Completeness | | | | |
-| Overall Score | | | | |
-
-**Score interpretation**
-
-- Metrics/cases ở mức Good (0.8–1.0): ____
-- Metrics/cases ở mức Needs Work (0.6–0.8): ____
-- Metrics/cases ở mức Significant Issues (<0.6): ____
-
-**Failure type distribution**
-
-| Failure Type | Count | Percentage |
-|---|---:|---:|
-| hallucination | | |
-| irrelevant | | |
-| incomplete | | |
-| off_topic | | |
-| refusal | | |
-
-**Chẩn đoán tổng quan:** Vấn đề chính nằm ở retrieval, generation hay cả hai?
-Dùng ít nhất hai metrics để bảo vệ kết luận.
-
-> *Câu trả lời:*
-
----
-
-## 2. Top 3 Worst Failures — 5 Whys
-
-Phân loại failure trước khi đề xuất fix. Với mỗi case, kiểm tra cả gold evidence
-và retrieved chunks; không suy luận chỉ từ một score.
+## 1. Top 3 Worst Failures
 
 ### Failure 1
-
-**ID và question:**
-
-> *Điền:*
-
-**Expected answer:**
-
-> *Điền:*
-
-**Actual answer:**
-
-> *Điền:*
-
-**Scores:** Context Recall: ____ | Context Precision: ____ | Faithfulness: ____ |
-Relevance: ____ | Completeness: ____ | Overall: ____
-
-**Evidence inspection:** Retriever lấy đúng/thiếu/thừa chunks nào?
-
-> *Câu trả lời:*
-
-| Level | Question | Answer |
-|---|---|---|
-| Symptom | Vấn đề quan sát được là gì? | |
-| Why 1 | Tại sao symptom xảy ra? | |
-| Why 2 | Tại sao nguyên nhân trên xảy ra? | |
-| Why 3 | Tại sao vấn đề đó chưa được ngăn chặn? | |
-| Why 4 | Tại sao cơ chế hiện tại chưa phát hiện hoặc xử lý được? | |
-| Why 5 | Root cause có thể hành động được là gì? | |
-
-**Root cause từ `find_root_cause()`:**
-
-> *Paste output:*
-
-**Bạn đồng ý hay không? Dẫn evidence từ trace:**
-
-> *Câu trả lời:*
-
-**Proposed fix cụ thể:**
-
-> *Câu trả lời:*
+- **ID:** A01
+- **Failure Type:** hallucination
+- **Root Cause (5 Whys):**
+  1. Why did it fail? The overall score was 0.109, driven by 0.000 Faithfulness and 0.040 Completeness.
+  2. Why were the scores so low? The word-overlap metric penalized the answer because the model gave a concise refusal ("I cannot assist with writing a prescription..."), while the expected answer contained a long explanation about scope.
+  3. Why was the expected answer so long? It followed the strict guidelines for out-of-scope requests, providing examples of supported topics.
+  4. Why didn't the generated answer match? The LLM was cautious and provided a direct refusal without elaborating on supported topics.
+  5. Why is this categorized as hallucination? Because Faithfulness was 0 (no words from context were in the short refusal answer) and the rule-based evaluator assigns "hallucination" when Faithfulness < 0.3. The root cause is a limitation in the simple word-overlap heuristic when evaluating adversarial refusals.
 
 ### Failure 2
-
-**ID và question:**
-
-> *Điền:*
-
-**Expected answer:**
-
-> *Điền:*
-
-**Actual answer:**
-
-> *Điền:*
-
-**Scores:** Context Recall: ____ | Context Precision: ____ | Faithfulness: ____ |
-Relevance: ____ | Completeness: ____ | Overall: ____
-
-**Evidence inspection:**
-
-> *Câu trả lời:*
-
-| Level | Question | Answer |
-|---|---|---|
-| Symptom | Vấn đề quan sát được là gì? | |
-| Why 1 | Tại sao symptom xảy ra? | |
-| Why 2 | Tại sao nguyên nhân trên xảy ra? | |
-| Why 3 | Tại sao vấn đề đó chưa được ngăn chặn? | |
-| Why 4 | Tại sao cơ chế hiện tại chưa phát hiện hoặc xử lý được? | |
-| Why 5 | Root cause có thể hành động được là gì? | |
-
-**Root cause và proposed fix:**
-
-> *Câu trả lời:*
+- **ID:** A02
+- **Failure Type:** incomplete
+- **Root Cause (5 Whys):**
+  1. Why did it fail? The overall score was 0.414, with Completeness at 0.241.
+  2. Why was completeness so low? The expected answer included a long explanation ("I cannot comply with this request... I can help you with OrbitTech product information..."), while the actual answer was a short refusal ("I'm unable to reveal any hidden prompts...").
+  3. Why did the model give a short refusal? The prompt injection triggered a basic refusal without fulfilling the requirement to list supported topics.
+  4. Why is this problematic? While safe, the answer isn't helpful enough to a legitimate customer who might be confused.
+  5. Why did the evaluator fail it? Word-overlap penalizes concise answers. The true root cause is poor prompt alignment for refusal formatting and the limitations of lexical metrics.
 
 ### Failure 3
+- **ID:** H05
+- **Failure Type:** - (Passed but low score: 0.576)
+- **Root Cause (5 Whys):**
+  1. Why was the score low? Faithfulness (0.600), Relevance (0.571), and Completeness (0.556) were all barely above the 0.5 passing threshold.
+  2. Why did it struggle with completeness? The model correctly stated that accidental damage is excluded, but its phrasing didn't strongly overlap with the expected answer's specific wording.
+  3. Why did relevance suffer? The question was about a specific hypothetical scenario (purchasing OrbitPlus *after* dropping the phone). The model's answer was correct but lacked some of the expected vocabulary.
+  4. Why did it happen? The lexical evaluator (word-overlap) struggles with hard, multi-condition reasoning questions where correct answers can be phrased in entirely different words.
+  5. What is the root cause? The evaluation relies on simple heuristics rather than semantic understanding (LLM-as-a-judge).
 
-**ID và question:**
+## 2. Improvement Log
 
-> *Điền:*
+| Failure ID | Type | Root Cause | Suggested Fix | Status |
+|------------|------|------------|---------------|--------|
+| A01 | hallucination | Lexical metric limitation on safe refusals | Replace word-overlap with LLM-as-a-judge for semantic evaluation of refusals | Open |
+| A02 | incomplete | Lack of helpful context in refusals | Update system prompt to strictly enforce "refuse + explain scope + offer help" format | Open |
+| H05 | - | Rigid word-overlap scoring on complex reasoning | Use LLM-as-a-judge to evaluate multi-condition reasoning based on a rubric | Open |
 
-**Expected answer:**
+## 3. Regression Strategy
 
-> *Điền:*
-
-**Actual answer:**
-
-> *Điền:*
-
-**Scores:** Context Recall: ____ | Context Precision: ____ | Faithfulness: ____ |
-Relevance: ____ | Completeness: ____ | Overall: ____
-
-**Evidence inspection:**
-
-> *Câu trả lời:*
-
-| Level | Question | Answer |
-|---|---|---|
-| Symptom | Vấn đề quan sát được là gì? | |
-| Why 1 | Tại sao symptom xảy ra? | |
-| Why 2 | Tại sao nguyên nhân trên xảy ra? | |
-| Why 3 | Tại sao vấn đề đó chưa được ngăn chặn? | |
-| Why 4 | Tại sao cơ chế hiện tại chưa phát hiện hoặc xử lý được? | |
-| Why 5 | Root cause có thể hành động được là gì? | |
-
-**Root cause và proposed fix:**
-
-> *Câu trả lời:*
-
----
-
-## 3. Failure Clustering
-
-Một root cause có thể tạo ra nhiều failures. Nhóm theo nguyên nhân có thể sửa,
-không chỉ nhóm theo tên metric.
-
-| Cluster | Root Cause | Failure IDs | Priority |
-|---|---|---|---|
-| 1 | | | High/Medium/Low |
-| 2 | | | |
-| 3 | | | |
-
-**Nếu chỉ được sửa một cluster, bạn chọn cluster nào và vì sao?**
-
-> *Câu trả lời:*
-
----
-
-## 4. Improvement Log
-
-Paste output của `generate_improvement_log()`:
-
-```text
-[paste Markdown table here]
-```
-
-**Ba improvement suggestions ưu tiên**
-
-1. ____
-2. ____
-3. ____
-
-Với mỗi suggestion, nêu metric dự kiến thay đổi và cách đo lại.
-
-| Suggestion | Target metric | Verification method |
-|---|---|---|
-| | | |
-| | | |
-| | | |
-
----
-
-## 5. Regression Testing Strategy
-
-**Câu 1: Khi nào chạy `run_regression()` trong production workflow?**
-
-> *Câu trả lời:*
-
-**Câu 2: Threshold drop 0.05 có phù hợp OrbitTech Customer Support không? Vì sao?**
-
-> *Câu trả lời:*
-
-**Câu 3: Metric/failure nào phải block deployment, metric nào chỉ alert?**
-
-> *Câu trả lời:*
-
-**Câu 4: Điền evaluation stages vào flow.**
-
-```text
-Code/prompt/retrieval change → [________] → [________] → [________] → Deploy
-```
-
-> *Giải thích:*
-
----
-
-## 6. Continuous Improvement Loop
-
-```text
-Evaluate → Analyze → Improve → Augment benchmark → Repeat
-```
-
-| Priority | Action | Metric dự kiến cải thiện | Expected impact |
-|---:|---|---|---|
-| 1 | | | |
-| 2 | | | |
-| 3 | | | |
-
-**Hai hoặc ba failure cases nào cần thêm vào benchmark ở vòng tiếp theo?**
-
-> *Câu trả lời:*
-
----
-
-## 7. Final Reflection
-
-**Điều gì trong kết quả benchmark trái với dự đoán ban đầu của bạn?**
-
-> *Câu trả lời:*
-
-**Word-overlap heuristics trong lab có giới hạn gì? Nếu đưa hệ thống vào
-production, bạn sẽ thay hoặc bổ sung metric nào?**
-
-> *Câu trả lời:*
+To prevent future quality drops:
+1. **Automated CI/CD Gates:** Integrate the `BenchmarkRunner` into the CI/CD pipeline. Block deployment if the overall pass rate drops below 95% or if any critical policy question fails.
+2. **Upgrade to LLM-as-a-Judge:** Move away from word-overlap metrics (`RAGASEvaluator`) and implement `LLMJudge` to evaluate semantic meaning, especially for Hard and Adversarial cases.
+3. **Continuous Monitoring:** Log all production queries and user feedback (thumbs up/down). Periodically sample low-rated answers and add them to the `golden_dataset.json` to prevent regressions on newly discovered edge cases.
