@@ -47,17 +47,17 @@ Ba bias thường gặp:
 **Câu 1: Thiết kế experiment phát hiện position bias với ít nhất hai conditions.**
 
 > *Câu trả lời:*
-> Condition A: Present Answer X first, then Answer Y. Condition B: Swap order — present Answer Y first, then Answer X. Use the same judge LLM and rubric for both conditions. Run each condition on 50+ question-answer pairs. Compare average scores: if the first-position answer consistently scores higher across conditions regardless of content quality, positional bias is confirmed. Statistical significance can be measured with a paired t-test.
+> Điều kiện A: Đưa ra Câu trả lời X trước, sau đó đến Câu trả lời Y. Điều kiện B: Đảo ngược thứ tự — đưa ra Câu trả lời Y trước, sau đó đến Câu trả lời X. Sử dụng cùng một giám khảo LLM và rubric cho cả hai điều kiện. Chạy mỗi điều kiện trên 50+ cặp câu hỏi-trả lời. So sánh điểm trung bình: nếu câu trả lời ở vị trí đầu tiên luôn đạt điểm cao hơn ở cả hai điều kiện bất kể chất lượng nội dung, thì position bias đã được xác nhận. Mức độ ý nghĩa thống kê có thể được đo bằng kiểm định t-test bắt cặp.
 
 **Câu 2: Làm thế nào giảm verbosity bias bằng rubric design?**
 
 > *Câu trả lời:*
-> Include an explicit rubric criterion that penalizes unnecessary verbosity. For example: "Score 5 requires a concise answer covering all key points without filler. Redundant sentences or padding reduce the score by one level." Additionally, add a word-count-normalized scoring instruction: "Evaluate information density, not length. A shorter answer with all required facts scores higher than a longer answer repeating the same points."
+> Thêm một tiêu chí rõ ràng trong rubric để phạt việc dài dòng không cần thiết. Ví dụ: "Điểm 5 yêu cầu một câu trả lời ngắn gọn bao gồm tất cả các điểm chính mà không có từ ngữ thừa thãi. Các câu lặp lại hoặc lan man sẽ bị giảm một bậc điểm." Ngoài ra, thêm một hướng dẫn chấm điểm chuẩn hóa theo số lượng từ: "Đánh giá mật độ thông tin, không phải độ dài. Một câu trả lời ngắn hơn nhưng có tất cả các dữ kiện cần thiết sẽ đạt điểm cao hơn một câu trả lời dài hơn nhưng chỉ lặp lại các điểm đó."
 
 **Câu 3: Tại sao cần calibrate LLM judge với human labels?**
 
 > *Câu trả lời:*
-> LLM judges can have systematic biases (leniency, severity, topic preference) that diverge from human expectations. Calibration with human labels establishes a ground truth baseline, measures inter-rater agreement (Cohen's kappa), identifies systematic gaps, and allows rubric adjustments before deploying the judge at scale. Without calibration, automated scores may not correlate with actual answer quality, making evaluation unreliable.
+> Giám khảo LLM có thể có các thành kiến có hệ thống (khoan dung, khắt khe, ưu tiên một số chủ đề) đi ngược lại với kỳ vọng của con người. Việc hiệu chuẩn (calibration) với nhãn của con người sẽ thiết lập một baseline chuẩn (ground truth), đo lường độ đồng thuận giữa các người chấm (Cohen's kappa), xác định các lỗ hổng có hệ thống, và cho phép điều chỉnh rubric trước khi đưa giám khảo LLM vào chấm quy mô lớn. Nếu không được hiệu chuẩn, điểm số tự động có thể không tương quan với chất lượng thực tế của câu trả lời, làm cho quá trình đánh giá thiếu tin cậy.
 
 ### Exercise 1.3 — Evaluation trong CI/CD
 
@@ -72,9 +72,9 @@ Ba bias thường gặp:
 **Câu 2: Khi nào dùng offline evaluation, online evaluation và human review?**
 
 > *Câu trả lời:*
-> - **Offline evaluation**: Before every deployment — run the full benchmark suite on the golden dataset after any code change, prompt update, or model swap. Acts as a CI/CD quality gate.
-> - **Online evaluation**: Continuously in production — monitor live traffic with feedback functions (e.g., TruLens groundedness) to detect distribution shift, new failure patterns, or latency degradation.
-> - **Human review**: For high-stakes decisions (warranty disputes, account security), new failure categories not covered by automated metrics, and periodic calibration of the LLM judge against human labels.
+> - **Offline evaluation (Đánh giá ngoại tuyến)**: Thực hiện trước mỗi lần deploy — chạy toàn bộ bài test (benchmark suite) trên golden dataset sau bất kỳ thay đổi code, cập nhật prompt, hoặc đổi model nào. Vai trò như một cổng kiểm soát chất lượng CI/CD (quality gate).
+> - **Online evaluation (Đánh giá trực tuyến)**: Chạy liên tục trên production — giám sát lượng traffic thực tế bằng các hàm phản hồi (feedback functions, vd: TruLens groundedness) để phát hiện sự thay đổi phân phối (distribution shift), các mẫu lỗi mới, hoặc sự suy giảm về độ trễ.
+> - **Human review (Con người đánh giá)**: Dùng cho các quyết định rủi ro cao (tranh chấp bảo hành, bảo mật tài khoản), các hạng mục lỗi mới chưa được hệ thống tự động nhận diện, và để hiệu chuẩn định kỳ giám khảo LLM so với nhãn của con người.
 
 ---
 
@@ -173,7 +173,7 @@ và quyết định thiết kế, không chép lại toàn bộ QA.
 **Điểm khó nhất khi xây dựng expected answer hoặc evidence là gì?**
 
 > *Câu trả lời:*
-> The hardest part was crafting Hard-level questions that genuinely require multi-condition reasoning rather than just combining two facts. For H01 (return policy versioning), I had to carefully trace the policy version rules across `09_escalation_and_policy_updates.md` to ensure the expected answer correctly reflects which version applies based on the order-placement date vs. the delivery date. Another challenge was ensuring evidence text was copied verbatim — even minor whitespace differences caused validator failures.
+> Phần khó nhất là soạn các câu hỏi mức độ Hard (Khó) đòi hỏi khả năng suy luận đa điều kiện (multi-condition reasoning) thực sự, thay vì chỉ kết hợp hai dữ kiện đơn giản. Đối với câu H01 (phiên bản chính sách hoàn trả), tôi đã phải theo dõi cẩn thận các quy tắc phiên bản chính sách trong `09_escalation_and_policy_updates.md` để đảm bảo đáp án chuẩn phản ánh chính xác phiên bản nào được áp dụng dựa trên ngày đặt hàng so với ngày giao hàng. Một thách thức khác là đảm bảo text tài liệu minh chứng (evidence) được copy nguyên văn — kể cả sự khác biệt nhỏ về khoảng trắng cũng khiến validator báo lỗi.
 
 **Xác nhận:**
 
@@ -270,9 +270,9 @@ Chọn 3–5 dimensions:
 verbosity bias và self-preference bằng cách nào?
 
 > *Câu trả lời:*
-> - **Position bias**: Randomize the order of candidate answers before presenting to the judge. Run each evaluation twice with swapped order and average the scores.
-> - **Verbosity bias**: The rubric explicitly scores information density over length. Criterion: "A shorter answer covering all required facts scores equal to or higher than a longer answer with the same facts plus filler."
-> - **Self-preference bias**: Use a different model as judge than the model that generated the answers. If using the same model family, include calibration examples where human-written answers are intermixed with model outputs.
+> - **Position bias (Thiên kiến vị trí)**: Xáo trộn ngẫu nhiên thứ tự các câu trả lời ứng viên trước khi đưa cho giám khảo LLM. Chạy mỗi lượt đánh giá hai lần với thứ tự bị đảo ngược và lấy điểm trung bình.
+> - **Verbosity bias (Thiên kiến dài dòng)**: Rubric cần ghi rõ việc chấm điểm dựa trên mật độ thông tin thay vì độ dài. Tiêu chí: "Một câu trả lời ngắn hơn nhưng bao gồm tất cả các dữ kiện yêu cầu sẽ đạt điểm bằng hoặc cao hơn một câu trả lời dài hơn có cùng các dữ kiện đó nhưng thêm từ ngữ thừa thãi."
+> - **Self-preference bias (Thiên kiến tự ưu tiên)**: Sử dụng một model khác làm giám khảo so với model đã sinh ra câu trả lời. Nếu sử dụng cùng một họ model, cần đưa thêm các ví dụ hiệu chuẩn (calibration examples) trong đó các câu trả lời do con người viết được trộn lẫn với output của model.
 
 ### Exercise 3.4 — Framework Comparison (Bonus +10)
 
@@ -292,7 +292,7 @@ và TruLens; chạy hoặc thiết kế một so sánh có cùng input dataset.
 - Hai framework có tìm ra cùng failure cases không?
 
 > *Phân tích:*
-> Scores are generally correlated but not identical because each framework uses different internal prompts for LLM-based evaluation. DeepEval tends to be stricter because it uses binary pass/fail assertions — a case either meets the threshold or fails the test. RAGAS provides continuous scores more suitable for trend analysis. Both frameworks would likely identify the same worst-performing cases (adversarial and hard multi-condition questions), but DeepEval's hallucination metric may flag additional cases that RAGAS's faithfulness metric considers borderline.
+> Điểm số nhìn chung có sự tương quan nhưng không giống nhau hoàn toàn vì mỗi framework sử dụng các prompt nội bộ khác nhau cho việc đánh giá bằng LLM. DeepEval có xu hướng khắt khe hơn vì nó sử dụng các câu lệnh (assertions) pass/fail nhị phân — một case hoặc là đạt ngưỡng hoặc là trượt bài test. RAGAS cung cấp điểm số liên tục (continuous scores) phù hợp hơn cho việc phân tích xu hướng. Cả hai framework đều có khả năng nhận diện được những case kém nhất (câu hỏi adversarial và hard multi-condition), nhưng metric hallucination của DeepEval có thể gắn cờ thêm một số case mà metric faithfulness của RAGAS chỉ coi là ở mức ranh giới (borderline).
 
 ### Exercise 3.5 — Retrieval Reranking (Bonus +5)
 
@@ -319,12 +319,12 @@ thay đổi Context Recall hay không.
 **Tại sao Recall dự kiến không đổi?**
 
 > *Câu trả lời:*
-> Context Recall measures coverage = |expected ∩ union(chunks)| / |expected|. Reranking only changes the order of chunks, not the set of chunks. Since the union of all chunk tokens remains identical before and after reranking, the recall score stays the same. Recall depends on WHAT was retrieved, while precision depends on WHERE relevant chunks are ranked.
+> Context Recall (Độ phủ tài liệu) đo lường coverage = |đáp án chuẩn ∩ hợp của tất cả các chunks| / |đáp án chuẩn|. Reranking (xếp hạng lại) chỉ thay đổi thứ tự của các chunks, chứ không thay đổi tập hợp các chunks. Vì hợp của tất cả các token trong các chunks vẫn giữ nguyên trước và sau khi reranking, nên điểm recall vẫn giữ nguyên. Recall phụ thuộc vào việc CÁI GÌ được tìm thấy, trong khi precision phụ thuộc vào việc các chunks liên quan ĐƯỢC XẾP HẠNG Ở ĐÂU.
 
 **Khi nào reranking không đủ và cần sửa retriever/query/chunking?**
 
 > *Câu trả lời:*
-> Reranking is insufficient when: (1) Context Recall is already low — the relevant evidence was never retrieved in the first place, so no reordering can help; (2) Chunks are too small and fragment key information across many pieces, requiring chunk-size tuning; (3) The query doesn't match the vocabulary of the relevant document (vocabulary mismatch), requiring query expansion or semantic retrieval instead of BM25; (4) Multiple documents contain contradictory or overlapping information, requiring deduplication or source-aware chunking.
+> Reranking không đủ và cần can thiệp sâu hơn khi: (1) Context Recall đã quá thấp ngay từ đầu — bằng chứng liên quan chưa bao giờ được truy xuất về, nên không có việc sắp xếp lại nào có thể cứu vãn được; (2) Các chunks quá nhỏ và làm phân mảnh thông tin quan trọng qua nhiều mảnh khác nhau, lúc này cần điều chỉnh kích thước chunk (chunk-size tuning); (3) Câu hỏi không khớp với từ vựng của tài liệu liên quan (vocabulary mismatch), lúc này cần phải mở rộng truy vấn (query expansion) hoặc sử dụng tìm kiếm ngữ nghĩa (semantic retrieval) thay vì BM25; (4) Nhiều tài liệu chứa thông tin mâu thuẫn hoặc trùng lặp, đòi hỏi phải lọc trùng (deduplication) hoặc cắt chunk có nhận thức về nguồn gốc (source-aware chunking).
 
 ---
 
